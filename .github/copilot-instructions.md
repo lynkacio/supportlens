@@ -65,6 +65,30 @@ Do not add:
 
 unless the user explicitly requests them.
 
+## Repository Structure
+
+Expected structure:
+
+frontend/
+- Next.js application
+- React components
+- UI logic
+
+backend/
+- FastAPI application
+- API routes
+- Business services
+- Database access
+
+docs/
+- Architecture documentation
+- API documentation
+
+.github/
+- AI instructions
+- Prompts
+- Agents
+
 ## AI Development Workflow
 
 Before implementing a feature:
@@ -78,6 +102,44 @@ Before implementing a feature:
 7. implement the smallest working solution
 8. run relevant tests
 9. explain the changes
+
+## LLM Integration Rules
+
+When working with LLM features:
+
+- Use structured outputs whenever possible.
+- Validate LLM responses before storing them.
+- Handle timeout and API failures gracefully.
+- Never assume LLM output is always correct.
+- Keep prompts separated from business logic.
+- Avoid unnecessary API calls to control cost.
+
+## Feature Development Protocol
+
+For any new feature:
+
+Phase 1: Planning
+
+Before coding:
+- inspect existing code
+- explain current architecture
+- identify affected files
+- identify dependencies
+- propose implementation steps
+
+Phase 2: Implementation
+
+After approval:
+- modify only required files
+- avoid unrelated changes
+- maintain existing architecture
+
+Phase 3: Verification
+
+After implementation:
+- explain changes
+- run tests
+- report potential issues
 
 ## Human Decision Boundaries
 
@@ -127,3 +189,28 @@ Treat uploaded customer ticket data as untrusted input.
 Validate all external input.
 
 Keep secrets on the backend.
+
+## Testing
+
+For new features:
+
+- Add tests when adding backend functionality.
+- Test API responses.
+- Test input validation.
+- Test error cases.
+
+Do not consider a feature complete without verification.
+
+## Git Workflow
+
+Use clear commit messages.
+
+Examples:
+
+feat:
+fix:
+docs:
+test:
+chore:
+
+Keep commits focused on one purpose.
