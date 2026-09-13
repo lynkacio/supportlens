@@ -1,13 +1,22 @@
 from fastapi import FastAPI
-
 from app.routers.tickets import router as tickets_router
-
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
     title="SupportLens API",
     version="0.1.0",
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",     # Next.js 两种地址都可能用
+    ],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/health")
 def health_check():
