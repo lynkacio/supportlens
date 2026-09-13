@@ -39,6 +39,8 @@ Purpose:
 
 Upload customer support tickets for processing.
 
+Parsed tickets are stored in the configured database.
+
 Response:
 
 {
@@ -67,9 +69,7 @@ Purpose:
 
 Return processed tickets.
 
-Status:
-
-Planned
+Returns the tickets saved by the upload endpoint.
 
 ---
 

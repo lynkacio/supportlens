@@ -1,6 +1,10 @@
 from fastapi import FastAPI
-from app.routers.tickets import router as tickets_router
 from fastapi.middleware.cors import CORSMiddleware
+
+from app.database import create_tables
+from app.routers.tickets import router as tickets_router
+
+create_tables()
 
 app = FastAPI(
     title="SupportLens API",

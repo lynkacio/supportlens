@@ -20,6 +20,7 @@ env/
 .ruff_cache/
 .coverage
 htmlcov/
+*.db
 
 # Node / Next.js
 node_modules/
