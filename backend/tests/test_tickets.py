@@ -1,12 +1,35 @@
 import asyncio
 import io
+import os
 import unittest
 
 from fastapi import HTTPException, UploadFile
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
-from app.database import SessionLocal, create_tables
+os.environ.setdefault(
+    "DATABASE_URL",
+    "postgresql+psycopg://test:test@localhost/test",
+)
+
+from app import database
+from app.database import Base, create_tables
 from app.models import Ticket
-from app.routers.tickets import upload_tickets
+from app.routers.tickets import list_tickets, upload_tickets
+
+
+test_engine = create_engine(
+    "sqlite://",
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+)
+database.engine = test_engine
+database.SessionLocal = sessionmaker(
+    bind=test_engine,
+    autoflush=False,
+    autocommit=False,
+)
 
 
 def make_upload(filename: str, content: str) -> UploadFile:
@@ -22,7 +45,7 @@ class UploadTicketsTests(unittest.TestCase):
         create_tables()
 
     def setUp(self):
-        self.db = SessionLocal()
+        self.db = database.SessionLocal()
         self.db.query(Ticket).delete()
         self.db.commit()
 
@@ -62,6 +85,37 @@ class UploadTicketsTests(unittest.TestCase):
 
         self.assertEqual(response["tickets_processed"], 6)
         self.assertEqual(len(response["preview"]), 5)
+
+    def test_upload_persists_ticket_and_get_tickets_returns_it(self):
+        content = (
+            "ticket_id,customer_message,created_at\n"
+            "T001,First issue,2026-09-10T09:15:00\n"
+        )
+
+        asyncio.run(upload_tickets(make_upload("tickets.csv", content), self.db))
+
+        saved_tickets = list_tickets(self.db)
+
+        self.assertEqual(len(saved_tickets), 1)
+        self.assertEqual(saved_tickets[0].ticket_id, "T001")
+        self.assertEqual(saved_tickets[0].created_at.year, 2026)
+        self.assertIsNotNone(saved_tickets[0].processed_at)
+        self.assertIsNone(saved_tickets[0].category)
+
+    def test_upload_rejects_invalid_timestamp_without_partial_write(self):
+        content = (
+            "ticket_id,customer_message,created_at\n"
+            "T001,Valid issue,2026-09-10T09:15:00\n"
+            "T002,Invalid issue,not-a-timestamp\n"
+        )
+
+        with self.assertRaisesRegex(
+            HTTPException,
+            "created_at must be a valid ISO timestamp",
+        ):
+            asyncio.run(upload_tickets(make_upload("tickets.csv", content), self.db))
+
+        self.assertEqual(self.db.query(Ticket).count(), 0)
 
     def test_upload_rejects_missing_required_columns(self):
         content = "ticket_id,customer_message\nT001,Missing date\n"

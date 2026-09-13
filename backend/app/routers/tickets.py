@@ -3,9 +3,14 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import Ticket
-from app.schemas import TicketResponse, UploadTicketsResponse
+from app.schemas import TicketPreview, TicketResponse, UploadTicketsResponse
 from app.services.csv_service import parse_ticket_csv
-from app.services.ticket_service import get_tickets, save_tickets
+from app.services.ticket_service import (
+    TicketPersistenceError,
+    TicketValidationError,
+    get_tickets,
+    save_tickets,
+)
 
 
 PREVIEW_LIMIT = 5
@@ -44,13 +49,28 @@ async def upload_tickets(
             detail=str(exc),
         ) from exc
 
-    saved_tickets = save_tickets(db, tickets)
+    try:
+        saved_tickets = save_tickets(db, tickets)
+    except TicketValidationError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail="created_at must be a valid ISO timestamp",
+        ) from exc
+    except TicketPersistenceError as exc:
+        raise HTTPException(
+            status_code=500,
+            detail="Tickets could not be saved",
+        ) from exc
 
     return {
         "filename": file.filename,
         "tickets_processed": len(saved_tickets),
         "preview": [
-            TicketResponse.model_validate(ticket).model_dump()
+            TicketPreview(
+                ticket_id=ticket.ticket_id,
+                customer_message=ticket.customer_message,
+                created_at=ticket.created_at.isoformat(),
+            ).model_dump()
             for ticket in saved_tickets[:PREVIEW_LIMIT]
         ],
     }

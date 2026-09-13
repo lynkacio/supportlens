@@ -214,3 +214,42 @@ test:
 chore:
 
 Keep commits focused on one purpose.
+
+## Database Development Rules
+
+When implementing database functionality:
+
+* PostgreSQL is the approved persistent datastore.
+* Use SQLAlchemy 2.x ORM.
+* Use Psycopg 3 as the PostgreSQL driver.
+* Database credentials must come from environment variables.
+* Never hard-code database credentials.
+* Keep ORM models separate from API schemas.
+* Keep database persistence logic out of FastAPI routers.
+* Database operations should be implemented through service-layer functions.
+* Use a request-scoped SQLAlchemy Session.
+* Ensure sessions are closed correctly.
+* Roll back failed transactions.
+* Do not expose raw database exceptions or credentials to API clients.
+* Do not independently modify the approved database schema.
+* Do not add tables, relationships, constraints, indexes, or migrations unless explicitly requested.
+* Do not introduce async database access unless explicitly requested.
+* Preserve existing CSV validation behavior and existing API contracts.
+
+Before changing database-related code:
+
+1. inspect the existing backend implementation
+2. inspect `docs/project-requirements.md`
+3. inspect existing tests
+4. describe the current upload flow
+5. identify exactly which files need to change
+6. propose the smallest implementation plan
+7. do not implement until the planned changes are consistent with the approved architecture
+
+After implementation:
+
+1. run existing tests
+2. add persistence-specific tests
+3. report exactly which tests were executed
+4. explain database transaction and session behavior
+5. report any unresolved risks or assumptions

@@ -6,9 +6,11 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 from app.config import DATABASE_URL
 
 
-connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+def create_tables() -> None: 
+    Base.metadata.create_all(bind=engine)
+    
 
-engine = create_engine(DATABASE_URL, connect_args=connect_args)
+engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
 
 
@@ -22,7 +24,3 @@ def get_db() -> Generator[Session, None, None]:
         yield db
     finally:
         db.close()
-
-
-def create_tables() -> None:
-    Base.metadata.create_all(bind=engine)
