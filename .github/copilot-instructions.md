@@ -114,6 +114,11 @@ When working with LLM features:
 - Keep prompts separated from business logic.
 - Avoid unnecessary API calls to control cost.
 
+## Ticket Data Rules
+- `category` with fixed values:`billing | technical | account | feature_request | other`
+- `priority` with fixed values:`low | medium | high | urgent`
+- Do not invent new values in code, tests, or prompts. New values must be added to `enums.py` first.
+
 ## Feature Development Protocol
 
 For any new feature:

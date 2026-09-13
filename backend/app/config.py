@@ -14,3 +14,11 @@ if not DATABASE_URL.startswith("postgresql+psycopg://"):
     raise RuntimeError(
         "DATABASE_URL must use the postgresql+psycopg:// SQLAlchemy dialect"
     )
+
+# Avoid using os.environ["DEEPSEEK_API_KEY"]
+# get deepseek api key from environment variable, raise error if not set
+def get_deepseek_api_key() -> str:
+    key = os.environ.get("DEEPSEEK_API_KEY")
+    if not key:
+        raise RuntimeError("DEEPSEEK_API_KEY is not set (add it to backend/.env)")
+    return key

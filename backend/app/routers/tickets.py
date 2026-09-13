@@ -3,14 +3,15 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import Ticket
-from app.schemas import TicketPreview, TicketResponse, UploadTicketsResponse
+from app.schemas import TicketPreview, TicketResponse, UploadTicketsResponse, AnalysisReportResponse
 from app.services.csv_service import parse_ticket_csv
 from app.services.ticket_service import (
     TicketPersistenceError,
     TicketValidationError,
     get_tickets,
     save_tickets,
-)
+    analyze_pending_tickets
+    )
 
 
 PREVIEW_LIMIT = 5
@@ -79,3 +80,8 @@ async def upload_tickets(
 @router.get("", response_model=list[TicketResponse])
 def list_tickets(db: Session = Depends(get_db)) -> list[Ticket]:
     return get_tickets(db)
+
+@router.post("/analyze", response_model=AnalysisReportResponse)
+def analyze_tickets(db: Session = Depends(get_db)) -> AnalysisReportResponse:
+    """Analyze all not-yet-analyzed tickets. Idempotent — safe to call repeatedly."""
+    return analyze_pending_tickets(db)

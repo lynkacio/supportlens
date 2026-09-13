@@ -27,3 +27,7 @@ class UploadTicketsResponse(BaseModel):
     filename: str
     tickets_processed: int
     preview: list[TicketPreview]
+    
+class AnalysisReportResponse(BaseModel):
+    analyzed: int
+    failed: list[str]

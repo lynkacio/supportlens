@@ -1,10 +1,16 @@
-from datetime import datetime, timezone
+import logging
+from select import select
+from pytest import Session
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
 
+from app.schemas import AnalysisReportResponse
+from app.services.llm_service import LLMServiceError, analyze_ticket
 from app.models import Ticket
+from datetime import datetime, timezone
+
+logger = logging.getLogger(__name__)
 
 
 class TicketPersistenceError(Exception):
@@ -50,3 +56,44 @@ def save_tickets(db: Session, tickets: list[dict[str, str]]) -> list[Ticket]:
 
 def get_tickets(db: Session) -> list[Ticket]:
     return list(db.scalars(select(Ticket).order_by(Ticket.id)))
+
+
+def analyze_pending_tickets(db: Session) -> AnalysisReportResponse:
+    """Analyze tickets that have no category yet, one at a time, writing back per ticket.
+
+    Per-ticket isolation: any single failure neither blocks nor rolls back the others.
+    """
+    pending = (
+        db.query(Ticket)
+        .filter(Ticket.category.is_(None))
+        .order_by(Ticket.id)
+        .all()
+    )
+
+    analyzed = 0
+    failed: list[str] = []
+
+    for ticket in pending:
+        # ── LLM call: failure affects only this ticket ──────────
+        try:
+            result = analyze_ticket(ticket.customer_message)
+        except LLMServiceError as exc:
+            logger.warning("LLM analysis failed ticket_id=%s: %s", ticket.ticket_id, exc)
+            failed.append(ticket.ticket_id)
+            continue
+
+        ticket.category = result.category.value
+        ticket.priority = result.priority.value
+        ticket.summary = result.summary
+        ticket.suggested_response = result.suggested_response
+
+        # ── Write-back: one commit per ticket ───────────────────
+        try:
+            db.commit()
+            analyzed += 1
+        except SQLAlchemyError:
+            db.rollback()
+            logger.exception("Failed to persist analysis ticket_id=%s", ticket.ticket_id)
+            failed.append(ticket.ticket_id)
+
+    return AnalysisReportResponse(analyzed=analyzed, failed=failed)
