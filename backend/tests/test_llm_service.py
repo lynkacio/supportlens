@@ -9,7 +9,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from app.services.llm_service import LLMServiceError, TicketAnalysis, analyze_ticket
+from app.services.llm_service import LLMServiceError, TicketAnalysis, analyze_ticket, answer_question
 
 
 # ─────────────────────────────────────────────────────────────
@@ -99,3 +99,15 @@ def test_invalid_then_valid_corrects_on_second_attempt():
 def test_empty_message_raises_immediately():
     with pytest.raises(LLMServiceError):
         analyze_ticket("", client=FakeClient([_valid_json()]))
+        
+
+def test_answer_question_returns_text():
+    client = FakeClient(["The most recent high-priority issue is ticket #100."])
+
+    result = answer_question(
+        "What is the most recent high-priority issue?",
+        "- [100] urgent: Login is failing",
+        client=client,
+    )
+
+    assert "ticket #100" in result

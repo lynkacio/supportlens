@@ -152,3 +152,65 @@ def analyze_ticket(
     raise LLMServiceError(
         f"LLM analysis still failed after {MAX_ATTEMPTS} attempts"
     ) from last_error
+    
+
+def answer_question(
+    question: str,
+    ticket_context: str,
+    client: OpenAI | None = None,
+) -> str:
+    """Answer a user's natural language question based on ticket context.
+    
+    Unlike analyze_ticket, this returns free-form text and does not enforce JSON.
+    """
+    if not question or not question.strip():
+        raise LLMServiceError("question is empty")
+
+    client = client or _get_client()
+
+    messages = [
+        {"role": "system", "content": (
+            "You are an assistant for a customer support ticketing system. "
+            "You are given a user question and a list of support tickets. "
+            "Answer the question concisely and briefly, in the same language as the question. "
+            "Answer format is: Main Answer: <one sentence>\n, followed by any relevant details."
+            "Reference ticket IDs when relevant. If the tickets do not contain "
+            "enough information, say so honestly."
+        )},
+        {"role": "user", "content": (
+            f"User question: {question}\n\n"
+            f"Relevant tickets:\n{ticket_context}"
+        )},
+    ]
+
+    last_error: Exception | None = None
+
+    for attempt in range(1, MAX_ATTEMPTS + 1):
+        try:
+            completion = client.chat.completions.create(
+                model=MODEL,
+                messages=messages,
+                temperature=0,
+            )
+        except (APITimeoutError, APIConnectionError, RateLimitError) as exc:
+            last_error = exc
+            logger.warning(
+                "LLM transient error (attempt %d/%d): %s", attempt, MAX_ATTEMPTS, exc
+            )
+            if attempt < MAX_ATTEMPTS:
+                time.sleep(BASE_BACKOFF_SECONDS * attempt)
+            continue
+        except APIError as exc:
+            logger.exception("Non-retryable LLM API error")
+            raise LLMServiceError(f"LLM API error: {exc}") from exc
+
+        content = completion.choices[0].message.content or ""
+        if not content.strip():
+            last_error = LLMServiceError("Model returned empty content")
+            continue
+
+        return content.strip()
+
+    raise LLMServiceError(
+        f"LLM answer generation failed after {MAX_ATTEMPTS} attempts"
+    ) from last_error

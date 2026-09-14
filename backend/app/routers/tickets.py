@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
@@ -14,9 +14,12 @@ from app.services.ticket_service import (
     analyze_pending_tickets
     )
 
+import logging
+
 
 PREVIEW_LIMIT = 5
 
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/api/tickets",
@@ -121,3 +124,54 @@ def get_stats(db: Session = Depends(get_db)) -> TicketStatsResponse:
         by_category=by_category,
         by_priority=by_priority,
     )
+    
+    
+@router.post("/query")
+def query_tickets(payload: dict, db: Session = Depends(get_db)):
+    question = payload.get("question", "")
+
+    if not question or not question.strip():
+        raise HTTPException(status_code=400, detail="question is required")
+
+    # 1. Retrieve relevant tickets: prefer analyzed + high priority + most recent
+    tickets = (
+        db.query(Ticket)
+        .filter(Ticket.category.isnot(None))
+        .order_by(
+            Ticket.priority.desc(),   # urgent > high etc. (psycopg sorts alphabetically, not perfect but usable)
+            Ticket.created_at.desc()
+        )
+        .limit(10)
+        .all()
+    )
+
+    if not tickets:
+        return {"answer": "There are no analyzed tickets in the database. Please upload a CSV and call the analysis endpoint first.", "tickets": []}
+
+    # 2. Build the context to send to the LLM
+    ticket_context = "\n".join(
+        f"- [{t.ticket_id}] (priority={t.priority}, category={t.category}) "
+        f"{t.customer_message[:200]}"
+        for t in tickets
+    )
+
+    # 3. Call the LLM to answer
+    try:
+        from app.services.llm_service import answer_question, LLMServiceError
+        answer = answer_question(question, ticket_context)
+    except LLMServiceError as exc:
+        logger.exception("LLM query failed")
+        return {"answer": f"AI is temporarily unable to answer this question: {exc}", "tickets": []}
+
+    return {
+        "answer": answer,
+        "tickets": [
+            {
+                "ticket_id": t.ticket_id,
+                "priority": t.priority,
+                "category": t.category,
+                "message": t.customer_message[:100],
+            }
+            for t in tickets[:5]
+        ],
+    }
