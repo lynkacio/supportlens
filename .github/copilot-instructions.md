@@ -114,10 +114,30 @@ When working with LLM features:
 - Keep prompts separated from business logic.
 - Avoid unnecessary API calls to control cost.
 
+### Provider Compatibility
+
+- When switching LLM providers (OpenAI / DeepSeek / etc.), change only
+  `base_url`, `model`, and `key`. Keep package names and call sites unchanged.
+- Do not copy OpenAI-only features such as `parse` or
+  `beta.chat.completions.parse` into providers that do not support them.
+- For providers without structured-output helpers, use:
+  `client.chat.completions.create(..., response_format={"type": "json_object"})`
+
 ## Ticket Data Rules
-- `category` with fixed values:`billing | technical | account | feature_request | other`
-- `priority` with fixed values:`low | medium | high | urgent`
+
+- `category` with fixed values: `billing | technical | account | feature_request | other`
+- `priority` with fixed values: `low | medium | high | urgent`
 - Do not invent new values in code, tests, or prompts. New values must be added to `enums.py` first.
+
+## Single Source of Truth
+
+- Schema, enums, prompts, and documentation must each be defined exactly once.
+- `enums.py`, `models.py`, and `schemas.py` are the single source of truth for
+  `category`, `priority`, `ticket_id`, and related fields.
+- When a value or field changes, update every reference in the same change:
+  enums, models, schemas, prompts, docs, and tests.
+- Never duplicate `category`, `priority`, or `ticket_id` definitions across
+  multiple files.
 
 ## Feature Development Protocol
 
@@ -145,6 +165,32 @@ After implementation:
 - explain changes
 - run tests
 - report potential issues
+
+## Layered Verification
+
+- Any new feature or layer (LLM, service, router) must be verified in isolation first.
+- Before integration, the layer must pass an import and smoke check, for example:
+  `python -c "import xxx; print('ok')"`
+- Do not change multiple layers in one step. Verify each layer before wiring them together.
+
+## Error Handling & Logging
+
+- Any error (ImportError, NameError, ModuleNotFoundError, NoSuchTableError, etc.)
+  must be reported with the exact file and line number, and the specific missing
+  import or symbol. Do not say only "add an import".
+  Example: "In `ticket_service.py` line X, `from datetime import datetime` is missing."
+- Provide the precise one-line fix, not a list of guesses.
+- Every `except` block must log the full stack trace using `logger.exception(...)`.
+- The frontend must show only friendly messages. Backend tracebacks stay on the
+  backend for debugging and must not be exposed to API clients.
+
+## Idempotency & Isolation
+
+- Any repeatable operation (upload, analysis) must be idempotent.
+- A failure on a single ticket must be isolated and must not roll back other
+  successfully processed tickets.
+- Use filters such as `.filter(category.is_(None))` to process only unprocessed
+  tickets, and commit per ticket instead of batching all commits into one.
 
 ## Human Decision Boundaries
 
@@ -204,6 +250,12 @@ For new features:
 - Test input validation.
 - Test error cases.
 
+For LLM features:
+
+- Write unit tests together with a mock client.
+- Do not call the real LLM API in tests.
+- Do not leave "TODO test" placeholders. Provide concrete test cases.
+
 Do not consider a feature complete without verification.
 
 ## Git Workflow
@@ -219,6 +271,11 @@ test:
 chore:
 
 Keep commits focused on one purpose.
+
+Commit messages must include a body explaining the reason for the decision,
+not only the summary line.
+
+Do not describe planned work as completed work.
 
 ## Database Development Rules
 
