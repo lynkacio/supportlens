@@ -2,6 +2,7 @@
 
 import { useState, type FormEvent } from 'react';
 import PageContainer from "@/components/PageContainer";
+import { API_BASE_URL } from "../../lib/api";
 
 export default function QueryPage() {
   const [question, setQuestion] = useState('');
@@ -16,7 +17,7 @@ export default function QueryPage() {
     setAnswer('');
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/tickets/query', {
+      const res = await fetch(`${API_BASE_URL}/api/tickets/query`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question }),

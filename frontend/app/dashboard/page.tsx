@@ -57,21 +57,29 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/tickets/stats")
-      .then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
-      .then((data: Stats) => {
-        setStats(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
-  }, []);
+useEffect(() => {
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  if (!API_BASE) {
+    setError("Lack of NEXT_PUBLIC_API_BASE_URL");
+    setLoading(false);
+    return;
+  }
+
+  fetch(`${API_BASE}/api/tickets/stats`)
+    .then((r) => {
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    })
+    .then((data: Stats) => {
+      setStats(data);
+      setLoading(false);
+    })
+    .catch((err) => {
+      setError(err.message);
+      setLoading(false);
+    });
+}, []);
 
   if (loading) {
     return (

@@ -58,7 +58,7 @@ export default function Home() {
               Workspace / Overview
             </p>
             <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
-              Turn ticket volume into clarity.
+              Turn ticket volume into clarity
             </h1>
             <p className="mt-3 max-w-xl text-base leading-7 text-slate-600">
               Upload a support-ticket CSV to prepare your team&apos;s next view of customer pain points.
