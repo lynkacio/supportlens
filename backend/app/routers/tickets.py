@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from app.database import get_db
 from app.models import Ticket
-from app.schemas import TicketPreview, TicketResponse, UploadTicketsResponse, AnalysisReportResponse
+from app.schemas import TicketPreview, TicketResponse, UploadTicketsResponse, AnalysisReportResponse, TicketStatsResponse
 from app.services.csv_service import parse_ticket_csv
 from app.services.ticket_service import (
     TicketPersistenceError,
@@ -81,7 +82,42 @@ async def upload_tickets(
 def list_tickets(db: Session = Depends(get_db)) -> list[Ticket]:
     return get_tickets(db)
 
+
 @router.post("/analyze", response_model=AnalysisReportResponse)
 def analyze_tickets(db: Session = Depends(get_db)) -> AnalysisReportResponse:
     """Analyze all not-yet-analyzed tickets. Idempotent — safe to call repeatedly."""
     return analyze_pending_tickets(db)
+
+
+@router.get("/stats", response_model=TicketStatsResponse)
+def get_stats(db: Session = Depends(get_db)) -> TicketStatsResponse:
+    # Return all statistics: idempotent, cacheable
+    total = db.query(Ticket).count()
+    unanalyzed = db.query(Ticket).filter(Ticket.category.is_(None)).count()
+
+    by_category = {
+        str(k): v for k, v in db.query(
+            Ticket.category,
+            func.count(Ticket.id)
+        )
+        .group_by(Ticket.category)
+        .all()
+        if k is not None
+    }
+
+    by_priority = {
+        str(k): v for k, v in db.query(
+            Ticket.priority,
+            func.count(Ticket.id)
+        )
+        .group_by(Ticket.priority)
+        .all()
+        if k is not None
+    }
+
+    return TicketStatsResponse(
+        total=total,
+        unanalyzed=unanalyzed,
+        by_category=by_category,
+        by_priority=by_priority,
+    )

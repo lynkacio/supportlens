@@ -2,8 +2,11 @@ import asyncio
 import io
 import os
 import unittest
+from xmlrpc import client
 
+from app.main import app
 from fastapi import HTTPException, UploadFile
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -30,6 +33,7 @@ database.SessionLocal = sessionmaker(
     autoflush=False,
     autocommit=False,
 )
+client = TestClient(app)
 
 
 def make_upload(filename: str, content: str) -> UploadFile:
@@ -123,6 +127,16 @@ class UploadTicketsTests(unittest.TestCase):
         with self.assertRaisesRegex(HTTPException, "Missing required columns"):
             asyncio.run(upload_tickets(make_upload("tickets.csv", content)))
 
+
+def test_get_stats():
+    # Setup: create some tickets with different categories and priorities
+    response = client.get("/api/tickets/stats")
+    assert response.status_code == 200
+    data = response.json()
+    assert "total" in data
+    assert "unanalyzed" in data
+    assert "by_category" in data
+    assert "by_priority" in data
 
 if __name__ == "__main__":
     unittest.main()

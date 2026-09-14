@@ -28,6 +28,14 @@ class UploadTicketsResponse(BaseModel):
     tickets_processed: int
     preview: list[TicketPreview]
     
+    
 class AnalysisReportResponse(BaseModel):
     analyzed: int
     failed: list[str]
+
+
+class TicketStatsResponse(BaseModel):
+    total: int
+    unanalyzed: int
+    by_category: dict[str, int]
+    by_priority: dict[str, int]
