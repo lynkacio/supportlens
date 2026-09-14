@@ -1,6 +1,6 @@
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ??
-  "http://127.0.0.1:8000";
+  "https://supportlens-api-2x2i.onrender.com";
 
 export { API_BASE_URL };
 
