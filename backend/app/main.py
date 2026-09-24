@@ -12,8 +12,8 @@ app = FastAPI(
 
 # Allow CORS for local development + frontend after deployment
 origins = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
+    "http://supportlens-gold.vercel.app",
+    "https://supportlens-api-2x2i.onrender.com",
 ]
 
 # Optional: Override with environment variable (set in Render during deployment)
