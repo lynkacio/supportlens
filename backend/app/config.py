@@ -22,3 +22,13 @@ def get_deepseek_api_key() -> str:
     if not key:
         raise RuntimeError("DEEPSEEK_API_KEY is not set (add it to backend/.env)")
     return key
+
+
+def get_dashscope_api_key() -> str:
+    key = os.environ.get("DASHSCOPE_API_KEY")
+
+    if not key:
+        raise RuntimeError(
+            "DASHSCOPE_API_KEY is not set"
+        )
+    return key

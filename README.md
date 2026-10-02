@@ -1,125 +1,306 @@
-# SupportLens - 工单分析与数据看板
+# SupportLens
 
-基于 Next.js + FastAPI 的工单数据分析系统。支持上传 CSV 工单数据，自动分类和优先级判断，并通过 Dashboard 展示统计结果。
+AI-Powered Customer Support Analytics Platform
 
-## 功能特性
+SupportLens is an AI-enabled customer support analytics platform that transforms raw customer tickets into actionable insights.
 
-- 上传 CSV 工单数据
-- 自动工单分类（Billing / Technical / Account / Feature Request / Other）
-- 自动优先级判断（Low / Medium / High / Urgent）
-- Dashboard 数据看板：工单总数、未分析数量、分类分布、优先级分布
+The system combines a modern full-stack architecture with Large Language Models (LLMs) to automatically analyze support tickets, classify customer issues, identify priorities, generate summaries, and provide interactive analytics through a web dashboard.
 
-## 技术栈
+## Features
 
-- 前端：Next.js、TypeScript、Tailwind CSS
-- 后端：FastAPI、Python
-- 部署：Vercel（前端）、Render（后端）
+### 1. Automated Ticket Analysis
 
-## 目录结构
+SupportLens automatically processes customer support tickets and extracts:
 
+- Issue category
+- Priority level
+- Ticket summary
+- Suggested response
 
-.
-├── frontend/ # Next.js 前端
-│ ├── app/
-│ │ ├── dashboard/ # Dashboard 页面
-│ │ └── page.tsx # 首页
-│ └── package.json
-├── backend/ # FastAPI 后端
-│ ├── main.py # 主应用
-│ ├── requirements.txt
-│ └── ...
+Powered by LLM-based analysis.
+
+### 2. AI-Powered Analytics Dashboard
+
+The dashboard provides:
+
+- Ticket volume overview
+- Category distribution
+- Priority analysis
+- Customer issue trends
+
+Helping teams quickly understand support workload and customer needs.
+
+### 3. Natural Language AI Query
+
+Users can ask questions about support data using natural language.
+
+Examples:
+
+- What are the most common customer complaints?
+- Which issues require urgent attention?
+- Summarize the major problems this week.
+
+The system generates answers based on analyzed ticket data.
+
+### 4. Full-Stack Web Application
+
+The system includes:
+
+- Modern frontend interface
+- REST API backend
+- Database persistence
+- AI analysis pipeline
+- Containerized deployment
+
+## System Architecture
+
+```
+                 User
+                  |
+                  |
+            Next.js Frontend
+                  |
+                  |
+             REST API
+                  |
+                  |
+          FastAPI Backend
+                  |
+        -------------------
+        |                 |
+        |                 |
+ PostgreSQL Database   LLM API
+        |
+        |
+ Ticket Data
+```
+
+Docker deployment:
+
+```
+                Docker Container
+
+              FastAPI Backend
+                    |
+                    |
+             PostgreSQL Database
+                    |
+                    |
+                LLM Service
+```
+
+## Tech Stack
+
+### Frontend
+
+- Next.js
+- TypeScript
+- React
+- Tailwind CSS
+
+### Backend
+
+- FastAPI
+- Python
+- SQLAlchemy
+- REST API
+
+### Database
+
+- PostgreSQL
+
+### AI
+
+- Large Language Model API
+- Automated ticket classification
+- AI-generated summaries
+
+### Deployment
+
+- Docker
+- Docker Compose
+- Cloud deployment
+
+## Project Structure
+
+```
+supportlens/
+
+├── frontend/
+│   ├── app/
+│   ├── components/
+│   └── package.json
+│
+├── backend/
+│   ├── app/
+│   │   ├── main.py
+│   │   ├── routers/
+│   │   ├── services/
+│   │   └── models/
+│   │
+│   ├── requirements.txt
+│   ├── Dockerfile
+│   └── .dockerignore
+│
+├── compose.yaml
+│
 └── README.md
+```
 
+## Local Development
 
-## 本地开发
+### Backend Setup
 
-### 1. 启动后端
+Navigate to backend:
 
 ```bash
 cd backend
+```
+
+Install dependencies:
+
+```bash
 pip install -r requirements.txt
-uvicorn main:app --reload --port 8000
+```
 
-后端默认运行在 http://127.0.0.1:8000。
+Create environment file:
 
-2. 启动前端
-cd frontend
-npm install
+```
+.env
+```
 
-创建 frontend/.env.local：
+Example:
 
-NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
+```
+DATABASE_URL=your_database_url
+LLM_API_KEY=your_api_key
+```
 
-启动前端：
+Run backend:
 
-npm run dev
+```bash
+uvicorn app.main:app --reload
+```
 
-前端默认运行在 http://localhost:3000。
+Backend runs at:
 
-部署说明
-后端部署到 Render
+```
+http://localhost:8000
+```
 
-将代码推送到 GitHub
+API documentation:
 
-在 Render 创建 Web Service，连接仓库
+```
+http://localhost:8000/docs
+```
 
-构建命令：pip install -r requirements.txt
+## Docker Deployment
 
-启动命令：uvicorn main:app --host 0.0.0.0 --port $PORT
+### Build and Start
 
-前端部署到 Vercel
+From project root:
 
-将代码推送到 GitHub
+```bash
+docker compose up --build
+```
 
-在 Vercel 导入项目，framework 选择 Next.js
+This will:
 
-配置环境变量（见下方）
+- Build the backend Docker image
+- Create the backend container
+- Load environment variables
+- Start the FastAPI service
 
-环境变量
-Vercel 环境变量
-变量名	值	说明
-NEXT_PUBLIC_API_BASE_URL	https://supportlens-api-2x2i.onrender.com	线上后端地址，前端构建时注入
-本地环境变量（不提交到 Git）
-变量名	值	说明
-NEXT_PUBLIC_API_BASE_URL	http://127.0.0.1:8000	本地后端地址
-API 接口
-方法	路径	说明
-GET	/api/tickets/stats	获取工单统计信息
-POST	/api/tickets/upload	上传 CSV 工单数据
-示例：获取统计信息
-curl https://supportlens-api-2x2i.onrender.com/api/tickets/stats
+Backend:
 
-返回示例：
-{
-  "total": 100,
-  "unanalyzed": 20,
-  "by_category": {
-    "billing": 40,
-    "technical": 30
-  },
-  "by_priority": {
-    "high": 10,
-    "low": 50
-  }
-}
-线上地址
+```
+http://localhost:8000
+```
 
-前端：https://supportlens-gold.vercel.app
+API documentation:
 
-后端：https://supportlens-api-2x2i.onrender.com
+```
+http://localhost:8000/docs
+```
 
-备注
+### Stop Services
 
-本地 .env.local 文件不要提交到 GitHub
+```bash
+docker compose down
+```
 
-修改 Vercel 环境变量后，需要重新部署前端才会生效
+## Environment Variables
 
+The application uses environment variables for sensitive configuration.
 
----
+Example:
 
-### 几个关键点
+```
+DATABASE_URL=
 
-1. **本地地址写 `127.0.0.1:8000` 没问题**，但要在「部署说明」和「环境变量」里明确区分「本地」和「线上」。
-2. **`.env.local` 一定不要提交到 GitHub**，在 README 中注明即可。
-3. API 接口部分如果你还有别的接口（比如上传），根据实际情况补充。
-4. 线上地址要写真实可访问的地址。
+LLM_API_KEY=
+```
+
+Secrets should not be stored directly in source code.
+
+## API Documentation
+
+FastAPI automatically provides interactive API documentation:
+
+Swagger UI:
+
+```
+http://localhost:8000/docs
+```
+
+Main API functions include:
+
+- Ticket upload
+- Ticket analysis
+- Statistics retrieval
+- AI query
+
+## Development Workflow
+
+Typical workflow:
+
+```
+Modify Code
+    ↓
+Build Docker Image
+    ↓
+Run Container
+    ↓
+Test API
+    ↓
+Deploy
+```
+
+Build image manually:
+
+```bash
+docker build -t supportlens-backend ./backend
+```
+
+Run container:
+
+```bash
+docker run \
+--env-file backend/.env \
+-p 8000:8000 \
+supportlens-backend
+```
+
+## Future Improvements
+
+Potential improvements include:
+
+- Authentication and user management
+- Advanced ticket trend prediction
+- Multi-agent AI analysis
+- Real-time support monitoring
+- Automated workflow integration
+
+## License
+
+This project is developed as a portfolio engineering project.

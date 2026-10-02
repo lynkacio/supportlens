@@ -6,3 +6,5 @@ psycopg[binary]
 pytest
 python-dotenv
 openai
+dashscope
+mutagen

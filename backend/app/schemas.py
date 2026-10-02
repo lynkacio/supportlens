@@ -39,3 +39,7 @@ class TicketStatsResponse(BaseModel):
     unanalyzed: int
     by_category: dict[str, int]
     by_priority: dict[str, int]
+
+
+class TranscriptionResponse(BaseModel):
+    transcript: str

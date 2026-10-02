@@ -52,3 +52,96 @@ export async function uploadTickets(
 
   return response.json();
 }
+
+export interface TranscribeAudioResponse {
+  transcript: string;
+}
+
+export async function transcribeAudio(
+  file: File,
+): Promise<TranscribeAudioResponse> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`${API_BASE_URL}/api/transcribe`, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    let errorMessage = "Audio transcription failed";
+
+    try {
+      const errorData: unknown = await response.json();
+      if (
+        typeof errorData === "object" &&
+        errorData !== null &&
+        "detail" in errorData &&
+        typeof errorData.detail === "string"
+      ) {
+        errorMessage = errorData.detail;
+      }
+    } catch {
+      // Use the fallback message when the backend response is not JSON.
+    }
+
+    throw new Error(errorMessage);
+  }
+
+  const result: unknown = await response.json();
+  if (
+    typeof result !== "object" ||
+    result === null ||
+    !("transcript" in result) ||
+    typeof result.transcript !== "string"
+  ) {
+    throw new Error("The transcription service returned an invalid response");
+  }
+
+  return { transcript: result.transcript };
+}
+
+export interface TicketResponse {
+  id: number;
+  ticket_id: string;
+  customer_message: string;
+  created_at: string;
+  category: string | null;
+  priority: string | null;
+  summary: string | null;
+  suggested_response: string | null;
+  processed_at: string;
+}
+
+
+export async function createAudioTicket(file: File): Promise<TicketResponse> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`${API_BASE_URL}/api/tickets/audio-upload`, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    let errorMessage = "Audio ticket creation failed";
+
+    try {
+      const errorData: unknown = await response.json();
+      if (
+        typeof errorData === "object" &&
+        errorData !== null &&
+        "detail" in errorData &&
+        typeof errorData.detail === "string"
+      ) {
+        errorMessage = errorData.detail;
+      }
+    } catch {
+      // Use the fallback message when the backend response is not JSON.
+    }
+
+    throw new Error(errorMessage);
+  }
+
+  return response.json();
+}

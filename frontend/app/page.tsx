@@ -1,10 +1,12 @@
 'use client';
 
 import { FormEvent, useState } from "react";
+import Link from "next/link";
 import {
   AlertCircle,
   ArrowUpRight,
   CheckCircle2,
+  FileAudio,
   FileText,
   UploadCloud,
 } from "lucide-react";
@@ -55,7 +57,7 @@ export default function Home() {
         <header className="flex flex-col justify-between gap-5 border-b border-slate-200 pb-8 sm:flex-row sm:items-end">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.18em] text-teal-700">
-              Workspace / Overview
+              Workspace / Submit Tickets
             </p>
             <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
               Turn ticket volume into clarity
@@ -64,9 +66,19 @@ export default function Home() {
               Upload a support-ticket CSV to prepare your team&apos;s next view of customer pain points.
             </p>
           </div>
-          <div className="flex items-center gap-2 text-sm text-slate-500">
-            <span className="size-2 rounded-full bg-emerald-500" />
-            Local workspace
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-2 text-sm text-slate-500">
+              <span className="size-2 rounded-full bg-emerald-500" />
+              Local workspace
+            </div>
+            <Link
+              href="/transcribe"
+              className="inline-flex items-center gap-2 rounded-lg bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800"
+            >
+              <FileAudio size={17} />
+              Transcribe audio
+              <ArrowUpRight size={15} />
+            </Link>
           </div>
         </header>
 

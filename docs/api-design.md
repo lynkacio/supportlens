@@ -21,7 +21,32 @@ Verify that the backend service is running.
 
 ---
 
-## 2. Upload Tickets
+## 2. Transcribe Audio
+
+POST /api/transcribe
+
+Input (`multipart/form-data`):
+
+`file`: MP3 or 16-bit PCM WAV audio at 8 kHz or 16 kHz; maximum size 25 MB
+
+Purpose:
+
+Transcribe a local audio upload using DashScope Paraformer realtime ASR.
+The temporary upload is removed after the request. The transcript is returned
+to the client and is not analyzed by DeepSeek or stored in the database.
+
+Response:
+
+```json
+{"transcript": "I need help with my account."}
+```
+
+Unsupported or invalid audio returns HTTP 400, oversized uploads return HTTP
+413, and transcription-provider failures return HTTP 502.
+
+---
+
+## 3. Upload Tickets
 
 POST /api/tickets/upload
 
@@ -61,7 +86,7 @@ columns return HTTP 400.
 
 ---
 
-## 3. Get Tickets
+## 4. Get Tickets
 
 GET /api/tickets
 
@@ -73,7 +98,7 @@ Returns the tickets saved by the upload endpoint.
 
 ---
 
-## 4. Analytics
+## 5. Analytics
 
 GET /api/analytics
 
@@ -92,7 +117,7 @@ Planned
 
 ---
 
-## 5. AI Query
+## 6. AI Query
 
 POST /api/query
 
@@ -107,3 +132,24 @@ Example:
 Status:
 
 Planned
+
+---
+
+## Audio Ticket Creation
+
+POST /api/tickets/audio-upload
+
+Input (`multipart/form-data`):
+
+`file`: MP3 or 16-bit PCM WAV audio at 8 kHz or 16 kHz; maximum size 25 MB
+
+Purpose:
+
+Transcribe the local upload, analyze the transcript with the existing DeepSeek
+ticket analysis service, and save the fully analyzed ticket in PostgreSQL. The
+response uses the existing `TicketResponse` fields; `customer_message` contains
+the transcript. The temporary audio file is deleted after the request.
+
+Transcription or analysis failures return HTTP 502. Database persistence
+failures return HTTP 500. Invalid uploads return HTTP 400 and oversized uploads
+return HTTP 413.

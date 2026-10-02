@@ -1,12 +1,12 @@
 'use client';
 
 import Link from "next/link";
-import { BarChart3, FileUp, Home, MessageSquareText } from "lucide-react";
+import { AudioLines, BarChart3, FileUp, MessageSquareText } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 const navigation = [
-  { href: "/", label: "Overview", icon: Home },
-  { href: "/upload", label: "Upload tickets", icon: FileUp },
+  { href: "/", label: "Submit Tickets", icon: FileUp },
+  { href: "/transcribe", label: "Transcribe audio", icon: AudioLines },
   { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
   { href: "/query", label: "Ask AI", icon: MessageSquareText },
 ];
